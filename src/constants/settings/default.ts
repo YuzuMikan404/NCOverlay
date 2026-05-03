@@ -9,7 +9,7 @@ import { VOD_KEYS } from '../vods'
 export const SETTINGS_DEFAULT: SettingItems = {
   // 全般
   'settings:theme': 'auto',
-  'settings:vods': [...VOD_KEYS.filter((v) => v !== 'niconico')],
+  'settings:vods': [...VOD_KEYS.filter((v) => v !== 'niconico'), 'localFile'],
   'settings:capture:format': 'jpeg',
   'settings:capture:method': 'window',
   'settings:showChangelog': true,

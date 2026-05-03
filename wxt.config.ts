@@ -54,7 +54,7 @@ export default defineConfig({
       default_locale: 'ja',
       homepage_url: GITHUB_URL,
       permissions,
-      host_permissions: ['<all_urls>'],
+      host_permissions: ['<all_urls>', 'file:///*'],
       minimum_chrome_version,
       browser_specific_settings,
     }
