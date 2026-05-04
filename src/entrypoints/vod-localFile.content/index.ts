@@ -83,33 +83,36 @@ async function main() {
       return {
         input: title,
         duration,
+        disableParse: true,
       }
     },
 
     appendCanvas: (video, canvas) => {
-      // Firefoxのローカル動画ページ (TopLevelVideoDocument) では
-      // <body> を position:relative にすると動画レイアウトが壊れるため、
-      // canvas を fixed 配置で動画の表示位置に合わせて重ねる。
+      // 通常時: <body> を position:relative にして canvas を absolute で重ねる。
+      // NCOverlay-Canvas クラスが position:absolute/inset:0 を定義済み。
+      const body = document.body
+      body.style.position = 'relative'
+      body.style.margin = '0'
+      body.appendChild(canvas)
 
-      const syncCanvasToVideo = () => {
-        const rect = video.getBoundingClientRect()
-        canvas.style.position = 'fixed'
-        canvas.style.top = `${rect.top}px`
-        canvas.style.left = `${rect.left}px`
-        canvas.style.width = `${rect.width}px`
-        canvas.style.height = `${rect.height}px`
-        canvas.style.pointerEvents = 'none'
-        canvas.style.zIndex = '2147483647'
-      }
-
-      syncCanvasToVideo()
-      document.body.appendChild(canvas)
-
-      // ウィンドウリサイズ・フルスクリーン変化時に追従
-      const ro = new ResizeObserver(syncCanvasToVideo)
-      ro.observe(video)
-      window.addEventListener('resize', syncCanvasToVideo)
-      document.addEventListener('fullscreenchange', syncCanvasToVideo)
+      // フルスクリーン時: video.requestFullscreen() でフルスクリーンになると
+      // canvas は body に残ったまま見えなくなる。
+      // fullscreenchange イベントで canvas をフルスクリーン要素に移動し、
+      // 終了時に body に戻す。
+      document.addEventListener('fullscreenchange', () => {
+        const fsEl = document.fullscreenElement
+        if (fsEl && (fsEl === video || fsEl.contains(video))) {
+          // フルスクリーン開始: fsEl の position を relative にして canvas を移動
+          const fsElHtml = fsEl as HTMLElement
+          if (getComputedStyle(fsElHtml).position === 'static') {
+            fsElHtml.style.position = 'relative'
+          }
+          fsElHtml.appendChild(canvas)
+        } else {
+          // フルスクリーン終了: body に戻す
+          body.appendChild(canvas)
+        }
+      })
     },
   })
 
