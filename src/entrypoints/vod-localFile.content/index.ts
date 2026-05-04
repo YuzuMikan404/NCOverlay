@@ -130,18 +130,19 @@ async function main() {
 
     // file:// ページはシンプルなので document.body 直下の video を探す
     const video = document.querySelector<HTMLVideoElement>('video')
+    if (!video) return
 
-    if (video && video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      // メタデータがすでにロード済み:
+      // setVideo() で NCOPatcher の内部リスナーを先に登録してから
+      // loadedmetadata を手動発火して loadInfo → autoSearch を起動する。
+      patcher.setVideo(video).then(() => {
+        patcher.nco?.dispatchEvent(new Event('loadedmetadata'))
+      })
+    } else {
+      // メタデータ未ロード: 先に setVideo() して、あとは自然に
+      // loadedmetadata が来るのを NCOPatcher 内部リスナーに任せる。
       patcher.setVideo(video)
-    } else if (video) {
-      // メタデータ読み込み待ち
-      video.addEventListener(
-        'loadedmetadata',
-        () => {
-          patcher.setVideo(video)
-        },
-        { once: true }
-      )
     }
   }
 
