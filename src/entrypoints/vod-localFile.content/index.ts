@@ -87,19 +87,29 @@ async function main() {
     },
 
     appendCanvas: (video, canvas) => {
-      // video要素の親にcanvasを追加する
-      // NCOverlay-Canvas クラスが position:absolute/inset:0/etc を定義済み
-      const parent = video.parentElement
-      if (!parent) return
+      // Firefoxのローカル動画ページ (TopLevelVideoDocument) では
+      // <body> を position:relative にすると動画レイアウトが壊れるため、
+      // canvas を fixed 配置で動画の表示位置に合わせて重ねる。
 
-      if (getComputedStyle(parent).position === 'static') {
-        parent.style.position = 'relative'
+      const syncCanvasToVideo = () => {
+        const rect = video.getBoundingClientRect()
+        canvas.style.position = 'fixed'
+        canvas.style.top = `${rect.top}px`
+        canvas.style.left = `${rect.left}px`
+        canvas.style.width = `${rect.width}px`
+        canvas.style.height = `${rect.height}px`
+        canvas.style.pointerEvents = 'none'
+        canvas.style.zIndex = '2147483647'
       }
 
-      // z-index を上げてコメントを動画の上に表示
-      canvas.style.zIndex = '2147483647'
+      syncCanvasToVideo()
+      document.body.appendChild(canvas)
 
-      parent.appendChild(canvas)
+      // ウィンドウリサイズ・フルスクリーン変化時に追従
+      const ro = new ResizeObserver(syncCanvasToVideo)
+      ro.observe(video)
+      window.addEventListener('resize', syncCanvasToVideo)
+      document.addEventListener('fullscreenchange', syncCanvasToVideo)
     },
   })
 
